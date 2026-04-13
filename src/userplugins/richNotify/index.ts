@@ -57,7 +57,7 @@ interface RpcNotificationDispatch {
             readonly username: string;
             readonly global_name?: string;
         };
-        readonly stickerItems?: ReadonlyArray<{
+        readonly sticker_items?: ReadonlyArray<{
             readonly id: string;
             readonly name: string;
             readonly format_type: number;
@@ -221,7 +221,7 @@ function extractEmojis(content: string, size: number): EmojiRef[] {
 function extractSticker(
     msg: NonNullable<RpcNotificationDispatch["message"]>,
 ): StickerInfo | null {
-    const sticker = msg.stickerItems?.[0];
+    const sticker = msg.sticker_items?.[0];
     if (!sticker) return null;
 
     const formatType = sticker.format_type ?? 1;
@@ -345,7 +345,7 @@ export default definePlugin({
             if (message) {
                 logger.info("message keys:", Object.keys(message).join(", "));
                 logger.info("message.content (first 200):", message.content?.slice(0, 200));
-                logger.info("stickerItems:", JSON.stringify(message.stickerItems));
+                logger.info("sticker_items:", JSON.stringify(message.sticker_items));
                 logger.info("sticker_items:", JSON.stringify((message as any).sticker_items));
                 logger.info("attachments count:", message.attachments?.length ?? 0);
                 if (message.attachments?.[0]) {
