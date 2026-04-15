@@ -42,18 +42,29 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
 
       - name: Attempt merge and build
         id: auto
         run: |
+          # Workflows we intentionally removed that upstream keeps modifying.
+          OURS_DELETED=".github/workflows/build.yml .github/workflows/buildBranches.yml .github/workflows/nixosBuild.yml .github/workflows/publish.yml .github/workflows/reportBrokenPlugins.yml"
+
           if git merge upstream/main --no-edit; then
             echo "merge_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "merge_ok=false" >> $GITHUB_OUTPUT
-            git merge --abort
-            exit 0
+            # Resolve "modify/delete" conflicts for files we intentionally removed.
+            UNRESOLVED=$(git diff --name-only --diff-filter=U)
+            UNEXPECTED=$(comm -23 <(echo "$UNRESOLVED" | sort) <(echo "$OURS_DELETED" | tr ' ' '\n' | sort))
+            if [ -n "$UNEXPECTED" ]; then
+              echo "merge_ok=false" >> $GITHUB_OUTPUT
+              git merge --abort
+              exit 0
+            fi
+            git rm -f $OURS_DELETED 2>/dev/null || true
+            git commit --no-edit
+            echo "merge_ok=true" >> $GITHUB_OUTPUT
           fi
 
           pnpm install --frozen-lockfile
